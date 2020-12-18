@@ -1,0 +1,355 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>【转载】Redis多机模式方案 | Exqlnet's Blog</title><meta name="keywords" content="Redis"><meta name="author" content="Exqlnet"><meta name="copyright" content="Exqlnet"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="本文转载自 https:&#x2F;&#x2F;blog.wangqi.love&#x2F;articles&#x2F;redis&#x2F;Redis%E5%A4%9A%E6%9C%BA%E6%A8%A1%E5%BC%8F.html  Redis 单机模式会受到单机性能、单机容量、稳定性等的限制。因此在生产环境，一般会使用多机的方式来保证应用的稳定。Redis 的多机模式有以下三种：   主从复制模式  哨兵模式  集群模式  下文来详细描述">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【转载】Redis多机模式方案">
+<meta property="og:url" content="http://blog.exql.net/2020/03/25/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91Redis%E5%A4%9A%E6%9C%BA%E6%A8%A1%E5%BC%8F%E6%96%B9%E6%A1%88/index.html">
+<meta property="og:site_name" content="Exqlnet&#39;s Blog">
+<meta property="og:description" content="本文转载自 https:&#x2F;&#x2F;blog.wangqi.love&#x2F;articles&#x2F;redis&#x2F;Redis%E5%A4%9A%E6%9C%BA%E6%A8%A1%E5%BC%8F.html  Redis 单机模式会受到单机性能、单机容量、稳定性等的限制。因此在生产环境，一般会使用多机的方式来保证应用的稳定。Redis 的多机模式有以下三种：   主从复制模式  哨兵模式  集群模式  下文来详细描述">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://blog.exql.net/img/default_cover.jpg">
+<meta property="article:published_time" content="2020-03-25T13:12:54.000Z">
+<meta property="article:modified_time" content="2020-03-25T13:40:55.000Z">
+<meta property="article:author" content="Exqlnet">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://blog.exql.net/img/default_cover.jpg"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://blog.exql.net/2020/03/25/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91Redis%E5%A4%9A%E6%9C%BA%E6%A8%A1%E5%BC%8F%E6%96%B9%E6%A1%88/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isanchor: false
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2020-03-25 21:40:55'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/img/avatar.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">21</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fa fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fa fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fa fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fa fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fa fa-link"></i><span> 友链</span></a></div></div></div></div><div id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/default_cover.jpg)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Exqlnet's Blog</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fa fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fa fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fa fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fa fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fa fa-link"></i><span> 友链</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">【转载】Redis多机模式方案</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-03-25T13:12:54.000Z" title="发表于 2020-03-25 21:12:54">2020-03-25</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2020-03-25T13:40:55.000Z" title="更新于 2020-03-25 21:40:55">2020-03-25</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><blockquote>
+<p>本文转载自 <a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/Redis%E5%A4%9A%E6%9C%BA%E6%A8%A1%E5%BC%8F.html">https://blog.wangqi.love/articles/redis/Redis%E5%A4%9A%E6%9C%BA%E6%A8%A1%E5%BC%8F.html</a></p>
+</blockquote>
+<p>Redis 单机模式会受到单机性能、单机容量、稳定性等的限制。因此在生产环境，一般会使用多机的方式来保证应用的稳定。Redis 的多机模式有以下三种：</p>
+<ol>
+<li> 主从复制模式</li>
+<li> 哨兵模式</li>
+<li> 集群模式</li>
+</ol>
+<p>下文来详细描述一下三种模式的使用。</p>
+<p>Redis 的复制功能是支持多个数据库之间的数据同步。一类是主数据库 (master) 一类是从数据库(slave)，主数据库可以进行读写操作，当发生写操作的时候自动将数据同步到从数据库，而从数据库一般是只读的，并接收主数据库同步过来的数据，一个主数据库可以有多个从数据库，而一个从数据库只能有一个主数据库。</p>
+<p>通过 Redis 的复制功能可以很好的实现数据库的读写分离，提高服务器的负载能力。主数据库主要进行写操作，而从数据库负责读操作。</p>
+<p>我们在同一台机器的不同端口启动 Redis 来模拟多机的情况：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">主节点：127.0.0.1 6380</span><br><span class="line">从节点：127.0.0.1 6381</span><br></pre></td></tr></table></figure>
+<p>主从复制模式有两种配置方式：</p>
+<ul>
+<li>  手动修改配置文件</li>
+</ul>
+<p>修改从节点中 Redis 配置文件中的 slaveof 属性</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/redis-slave.png"><img src="https://blog.wangqi.love/articles/redis/media/redis-slave.png"></a></p>
+<p>启动两个 redis 实例，查看 redis 的 info 信息</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/6380-info.png"><img src="https://blog.wangqi.love/articles/redis/media/6380-info.png"></a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/6381-info.png"><img src="https://blog.wangqi.love/articles/redis/media/6381-info.png"></a></p>
+<p>可以看到，6380 现在 master 节点，而 6381 是 slave 节点。</p>
+<p>如下图所示，在主节点上写入数据会同步到从节点中：</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/6380-set.png"><img src="https://blog.wangqi.love/articles/redis/media/6380-set.png"></a><br><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/6381-get.png"><img src="https://blog.wangqi.love/articles/redis/media/6381-get.png"></a></p>
+<ul>
+<li>  动态设置</li>
+</ul>
+<p>通过<code>redis-cli</code>连接到从节点服务器，执行下面命令即可：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">slaveof 127.0.0.1 6380</span><br></pre></td></tr></table></figure>
+<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a><a href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9" title="注意事项"></a>注意事项</h2><p>如果你使用主从复制，那么要确保你的 master 激活了持久化，或者确保它不会再宕掉后自动重启。因为 slave 是 master 的完整备份，因此如果 master 通过了一个空数据集重启，slave 也会被清掉。</p>
+<p>在配置 Redis 复制功能的时候如果主数据库设置了密码，需要在从数据的配置文件中通过<code>masterauth</code>参数设置主数据库的密码，这样从数据库在连接主数据库时就会自动使用 auth 命令认证了。相当于做了一个免密码登录。</p>
+<h2 id="Java-客户端的使用"><a href="#Java-客户端的使用" class="headerlink" title="Java 客户端的使用"></a><a href="#Java%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84%E4%BD%BF%E7%94%A8" title="Java客户端的使用"></a>Java 客户端的使用</h2><p>Jedis 客户端无法直接使用 Redis 的主从模式来进行读写分离，需要指定两个 Jedis 实例来分别控制读写。因此不是非常方便。</p>
+<p>Redisson 客户端可以配置主从模式从而实现读写分离，示例如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">public class Demo &#123;</span><br><span class="line">    Logger logger &#x3D; LoggerFactory.getLogger(Demo.class);</span><br><span class="line"></span><br><span class="line">    private static RedissonClient instance;</span><br><span class="line">    </span><br><span class="line">    public Demo() &#123;</span><br><span class="line">        Config config &#x3D; new Config();</span><br><span class="line">        config.useMasterSlaveServers()</span><br><span class="line">                .setMasterAddress(&quot;redis:&#x2F;&#x2F;127.0.0.1:6380&quot;)</span><br><span class="line">                .addSlaveAddress(&quot;redis:&#x2F;&#x2F;127.0.0.1:6381&quot;);</span><br><span class="line">        instance &#x3D; Redisson.create(config);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void test01() throws InterruptedException &#123;</span><br><span class="line">        String key &#x3D; &quot;test&quot;;</span><br><span class="line">        RBucket&lt;String&gt; myObj &#x3D; instance.getBucket(key);</span><br><span class="line">        if (myObj !&#x3D; null) &#123;</span><br><span class="line">            myObj.delete();</span><br><span class="line">        &#125;</span><br><span class="line">        myObj.set(&quot;hello world&quot;);</span><br><span class="line">        &#x2F;&#x2F; 断点停在这里，然后down掉master，不影响读取</span><br><span class="line">        logger.info(myObj.get());</span><br><span class="line">        &#x2F;&#x2F; 恢复master，down掉slave，不影响写入</span><br><span class="line">        myObj.set(&quot;new Value&quot;);</span><br><span class="line">        &#x2F;&#x2F; 再恢复slave，down掉master，可正常读取</span><br><span class="line">        logger.info(myObj.get());</span><br><span class="line">        &#x2F;&#x2F; master已down掉，无法写入</span><br><span class="line">        myObj.set(&quot;can not write to master&quot;);</span><br><span class="line">        &#x2F;&#x2F; 恢复master，down掉slave，无法读取</span><br><span class="line">        logger.info(myObj.get());</span><br><span class="line"></span><br><span class="line">        instance.shutdown();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>set 操作时，至少要有一台可连接的 master，get 操作时，至少要有一台可连接的 slave。</p>
+<p>从生产角度看，单纯的主从复制模式作用有限。在没有其他监控机制的前提下，无论是 master 或 slave 挂掉，都需要手动干预才能保证读 / 写继续正常工作，理想情况下 master 挂掉，最好 slave 能自动 (无需人工干预) 选出一台充当 master 继续服务。</p>
+<p>这就是这一节要说的哨兵模式。</p>
+<p>Sentinel（哨兵）是 Redis 的高可用性（high availability）解决方案：由一个或多个 Sentinel 实例组成的 Sentinel 系统可以监视任意多个主服务器，以及这些主服务器属下的所有从服务器，并在被监视的主服务器进入下线状态时，自动将下线主服务器属下的某个从服务器升级为新的主服务器，然后由新的主服务器代替已下线的主服务器继续处理命令请求。</p>
+<p>注意：在使用 sentinel 监控主从节点的时候，从节点需要是使用动态方式配置的，如果直接修改配置文件，后期 sentinel 实现故障转移的时候会出问题。</p>
+<ul>
+<li><p>主观下线状态。</p>
+<p>在默认情况下，Sentinel 会以每秒一次的频率向所有与它创建了命令连接的实例（包括主服务器、从服务器、其他 Sentinel 在内）发送 PING 命令，并通过实例返回的 PING 命令回复来判断实例是否在线。</p>
+<p>Sentinel 配置文件中的<code>down-after-milliseconds</code>选项指定了 Sentinel 判断实例进入主观下线所需的时间长度：如果一个实例在<code>down-after-milliseconds</code>毫秒内，连续向 Sentinel 返回无效回复，那么 Sentinel 会修改这个实例所对应的实例结构，在结构的 flags 属性中打开<code>SRI_S_DOWN</code>标识，依次来表示这个实例已经进入主观下线状态。</p>
+</li>
+<li><p>客观下线状态。</p>
+<p>当 Sentinel 将一个主服务器判断为主观下线之后，为了确认这个主服务器是否真的下线了，它会向同样监视这一主服务器的其他 Sentinel 进行询问，看它们是否也任务主服务器已经进入了下线状态（可以是主观下线或者客观下线）。当 Sentinel 从其他 Sentinel 那里接收到足够数量的已下线判断之后，Sentinel 就会将从服务器判断为客观下线，并对主服务器执行故障转移操作。</p>
+</li>
+</ul>
+<h2 id="Sentinel-的配置"><a href="#Sentinel-的配置" class="headerlink" title="Sentinel 的配置"></a><a href="#Sentinel%E7%9A%84%E9%85%8D%E7%BD%AE" title="Sentinel的配置"></a>Sentinel 的配置</h2><p>使用前文主从复制的配置，加上三个 sentinel 的实例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">主节点：127.0.0.1 6380</span><br><span class="line">从节点：127.0.0.1 6381</span><br><span class="line">sentinel_1：127.0.0.1 26380</span><br><span class="line">sentinel_2：127.0.0.1 26381</span><br><span class="line">sentinel_3：127.0.0.1 26382</span><br></pre></td></tr></table></figure>
+<p><code>redis-sentinel.conf</code>文件配置如下，因为在同一台机器上运行，因此三个实例的端口需要不一样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"># sentinel实例运行的端口</span><br><span class="line">port 26380</span><br><span class="line"># sentinel需要监控的master信息：&lt;mastername&gt; &lt;masterIP&gt; &lt;masterPort&gt; &lt;quorum&gt;</span><br><span class="line"># &lt;quorum&gt;为需要判定客观下线所需的主观下线sentinel个数，这个参数不可以大于sentinel个数</span><br><span class="line">sentinel monitor mymaster 127.0.0.1 6381 1</span><br><span class="line"># 授权密码，在安全的环境中可以不设置</span><br><span class="line">sentinel auth-pass mymaster 123456</span><br><span class="line"># master被当前sentinel实例认为失效的间隔时间</span><br><span class="line">sentinel down-after-milliseconds mymaster 30000</span><br><span class="line"># 当新master产生时，同时进行slaveof到新master并进行同步复制的slave个数</span><br><span class="line"># 在slave执行slaveof与同步时，将会终止客户端请求</span><br><span class="line"># 此值较大，意味着集群终止客户端请求的时间总和较大</span><br><span class="line"># 此值较小，意味着集群在故障转移期间，多个slave向客户端提供服务时仍然使用旧数据</span><br><span class="line">sentinel parallel-syncs mymaster 1</span><br><span class="line"># failover过期时间，当failover开始后，在此时间内仍然没有触发任何failover操作，当前sentinel将会认为此次failover失败</span><br><span class="line">sentinel failover-timeout mymaster 180000</span><br></pre></td></tr></table></figure>
+<h2 id="启动-sentinel"><a href="#启动-sentinel" class="headerlink" title="启动 sentinel"></a><a href="#%E5%90%AF%E5%8A%A8sentinel" title="启动sentinel"></a>启动 sentinel</h2><p>输入以下命令启动 sentinel</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-sentinel redis-sentinel.conf</span><br></pre></td></tr></table></figure>
+<p>三个实例启动后的输出如下（如果想要使 sentinel 在后台运行，只需要在配置文件中加入<code>daemonize yes</code>）：</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/sentinel-26380.png"><img src="https://blog.wangqi.love/articles/redis/media/sentinel-26380.png"></a><br><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/sentinel-26381.png"><img src="https://blog.wangqi.love/articles/redis/media/sentinel-26381.png"></a><br><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/sentinel-26382.png"><img src="https://blog.wangqi.love/articles/redis/media/sentinel-26382.png"></a></p>
+<p>可以看到每个 sentinel 实例监控了 master 和 slave，以及另外两台 sentinel 实例。</p>
+<h2 id="故障转移"><a href="#故障转移" class="headerlink" title="故障转移"></a><a href="#%E6%95%85%E9%9A%9C%E8%BD%AC%E7%A7%BB" title="故障转移"></a>故障转移</h2><p>初始情况下，<code>127.0.0.1:6380</code>是 master，<code>127.0.0.1:6380</code>是 slave，如下图所示：</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/master-6380.png"><img src="https://blog.wangqi.love/articles/redis/media/master-6380.png"></a><br><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/slave-6381.png"><img src="https://blog.wangqi.love/articles/redis/media/slave-6381.png"></a></p>
+<p>此时我们关闭 master，经过<code>down-after-milliseconds</code>时间后（默认 30 秒），sentinel 会监控到 master 失效，并将 slave 提升为 master。</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/sentinel-failover.png"><img src="https://blog.wangqi.love/articles/redis/media/sentinel-failover.png"></a></p>
+<p>当多个 sentinel 都判断 master 下线时，master 则被判断为可观下线，监视这个下线 master 的各个 sentinel 会进行协商，选举出一个领头 sentinel，并由领头 sentinel 对下线 master 执行故障转移操作：</p>
+<ol>
+<li> 在已下线 master 属下的所有 slave 中，挑选一个状态良好、数据完整的 slave，然后向这个 slave 发送<code>SLAVEOF no one</code>命令，将这个 slave 转换为 master。</li>
+<li> 当新的 master 出现之后，领头 sentinel 下一步要做的就是，让已下线 master 属下的所有 slave 去复制新的 master。这一动作可以通过向 slave 发送<code>SLAVEOF</code>命令来实现。</li>
+<li> 将已下线的 master 设置为新的 master 的 slave。因为旧的 master 已经下线，所以这种设置是保存在旧 master 对应的实例结构里面，当旧 master 重新上线时，sentinel 就会向它发送<code>SLAVEOF</code>命令，让它成为新 master 的 slave</li>
+</ol>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/master-6381.png"><img src="https://blog.wangqi.love/articles/redis/media/master-6381.png"></a></p>
+<p>可以看到<code>127.0.0.1:6380</code>被转换为 master。</p>
+<p>如果将<code>127.0.0.1:6381</code>重新上线，<code>127.0.0.1:6380</code>会被设置为<code>127.0.0.1:6381</code>的 slave。</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/slave-6380.png"><img src="https://blog.wangqi.love/articles/redis/media/slave-6380.png"></a><br><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/master-6381-2.png"><img src="https://blog.wangqi.love/articles/redis/media/master-6381-2.png"></a></p>
+<h2 id="Java-客户端的使用-1"><a href="#Java-客户端的使用-1" class="headerlink" title="Java 客户端的使用"></a><a href="#Java%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84%E4%BD%BF%E7%94%A8-1" title="Java客户端的使用"></a>Java 客户端的使用</h2><p>Jedis 客户端的使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">public class JedisDemo &#123;</span><br><span class="line">    Logger logger &#x3D; LoggerFactory.getLogger(JedisDemo.class);</span><br><span class="line"></span><br><span class="line">    private JedisSentinelPool pool;</span><br><span class="line"></span><br><span class="line">    public JedisDemo() &#123;</span><br><span class="line">        HashSet&lt;String&gt; sentinels &#x3D; new HashSet&lt;&gt;();</span><br><span class="line">        sentinels.add(&quot;127.0.0.1:26380&quot;);</span><br><span class="line">        sentinels.add(&quot;127.0.0.1:26381&quot;);</span><br><span class="line">        sentinels.add(&quot;127.0.0.1:26382&quot;);</span><br><span class="line"></span><br><span class="line">        JedisPoolConfig poolConfig &#x3D; new JedisPoolConfig();</span><br><span class="line"></span><br><span class="line">        pool &#x3D; new JedisSentinelPool(&quot;mymaster&quot;, sentinels, poolConfig);</span><br><span class="line">        HostAndPort currentHostMaster &#x3D; pool.getCurrentHostMaster();</span><br><span class="line">        logger.info(&quot;&#123;&#125;:&#123;&#125;&quot;, currentHostMaster.getHost(), currentHostMaster.getPort());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void test01() &#123;</span><br><span class="line">        Jedis resource &#x3D; pool.getResource();</span><br><span class="line">        logger.info(resource.get(&quot;test&quot;));</span><br><span class="line">        resource.close();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Redisson 客户端的使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public class Demo &#123;</span><br><span class="line">    Logger logger &#x3D; LoggerFactory.getLogger(Demo.class);</span><br><span class="line"></span><br><span class="line">    private static RedissonClient instance;</span><br><span class="line"></span><br><span class="line">    public Demo() &#123;</span><br><span class="line">        Config config &#x3D; new Config();</span><br><span class="line">        config.useSentinelServers()</span><br><span class="line">                .setMasterName(&quot;mymaster&quot;)</span><br><span class="line">                .addSentinelAddress(&quot;redis:&#x2F;&#x2F;127.0.0.1:26380&quot;)</span><br><span class="line">                .addSentinelAddress(&quot;redis:&#x2F;&#x2F;127.0.0.1:26381&quot;)</span><br><span class="line">                .addSentinelAddress(&quot;redis:&#x2F;&#x2F;127.0.0.1:26382&quot;);</span><br><span class="line">        instance &#x3D; Redisson.create(config);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Redis 集群是 Redis 提供的分布式数据库方案。集群通过分片 (sharding) 的方式来保存数据库中的键值对：集群的整个数据库被分为 16384 个槽(slot)，数据库中的每个键都属于这 16384 个槽的其中一个，集群中的每个节点可以处理 0 个或最多 16384 个槽。</p>
+<p>当数据库中的 16384 个槽都有节点在处理时，集群处于上线状态；相反的，如果数据库中有任何一个槽没有得到处理，那么集群处于下线状态。</p>
+<p>集群使用公式<code>CRC16(key) &amp; 16383</code>来计算给定键 key 属于哪个槽。<code>CRC16(key)</code>语句用于计算键 key 的<code>CRC16</code>校验和，而<code>&amp; 16383</code>语句则用于计算出一个介于 0 至 16383 之间的整数作为键 key 的槽号。</p>
+<p>集群中的每个节点都有 1 个至 N 个复制品，其中一个主节点，其余的为从节点，如果主节点下线了，集群就会把这个主节点的一个从节点设置为新的主节点，继续工作。这样集群就不会因为一个主节点的下线而无法正常工作。如果某一个主节点和它所有的从节点都下线的话，Redis 集群就会停止工作了。</p>
+<p>Redis 集群不保证数据的强一致性，在特定的情况下，Redis 集群会丢失已经被执行过的写命令。使用异步复制是 Redis 集群可能会丢失写命令的其中一个原因，有时候由于网络原因，如果网络断开时间太长，Redis 集群就会启用新的主节点，之前发给主节点的数据就会丢失。</p>
+<h2 id="集群配置"><a href="#集群配置" class="headerlink" title="集群配置"></a><a href="#%E9%9B%86%E7%BE%A4%E9%85%8D%E7%BD%AE" title="集群配置"></a>集群配置</h2><p>要让集群正常工作至少需要三个主节点，我们这里在一台机器上创建 6 个实例来演示集群配置，实际生产环境中需要每个节点一台主机。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1 6380</span><br><span class="line">127.0.0.1 6381</span><br><span class="line">127.0.0.1 6382</span><br><span class="line">127.0.0.1 6383</span><br><span class="line">127.0.0.1 6384</span><br><span class="line">127.0.0.1 6385</span><br></pre></td></tr></table></figure>
+<p>每个节点的配置如下，因为在同一台机器上运行，因此 6 个实例的端口需要不一样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#daemonize yes</span><br><span class="line">port 6380</span><br><span class="line">cluster-enabled yes</span><br><span class="line">cluster-config-file nodes.conf</span><br><span class="line">cluster-node-timeout 5000</span><br></pre></td></tr></table></figure>
+<p>文件中的<code>cluster-enabled</code>选项用于开启实例的集群模式，而<code>cluster-conf-file</code>选项则设定了保存节点配置文件的路径，默认值为<code>nodes.conf</code>。节点配置文件无需人为修改，它由 Redis 集群在启动时创建，并在有需要时自动进行更新。</p>
+<p>通过<code>redis-server redis.conf</code>命令分别启动 6 个实例。</p>
+<p>现在我们已经有了 6 个正在运行中的 Redis 实例，接下来我们需要使用这些实例来创建集群，并为每个节点编写配置文件。通过使用 Redis 集群命令行工具<code>redis-trib</code>，编写节点配置文件的工作可以非常容易地完成。<code>redis-trib</code>位于 Redis 源码的 src 文件中，它是一个 Ruby 程序，这个程序通过向实例发送特殊命令来完成创建新集群，检查集群，或者对集群进行重新分片 (reshared) 等工作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;redis-trib.rb create --replicas 1 127.0.0.1:6380 127.0.0.1:6381 127.0.0.1:6382 127.0.0.1:6383 127.0.0.1:6384 127.0.0.1:6385</span><br></pre></td></tr></table></figure>
+<p>这个命令在这里用于创建一个新的集群，选项<code>--replicas 1</code>表示我们希望为集群中的每个主节点创建一个从节点，之后跟着的其他参数则是这个集群实例的地址列表。</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/redis-trib.rb-1.png"><img src="https://blog.wangqi.love/articles/redis/media/redis-trib.rb-1.png"></a></p>
+<p>如上图所示，<code>redis-trib</code>会打印一份预想中的配置给你看，如果觉得没问题的话，就可以输入<code>yes</code>，<code>redis-trib</code>就会将这份配置应用到集群当中，让各个节点开始互相通讯。</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/redis-trib.rb-2.png"><img src="https://blog.wangqi.love/articles/redis/media/redis-trib.rb-2.png"></a></p>
+<p>到此，我们的集群就搭建成功了。</p>
+<p>使用命令<code>redis-cli -c -p 6380</code>进入命令行。</p>
+<p>使用<code>cluster nodes</code>命令查看所有的节点信息：</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/cluster-nodes.png"><img src="https://blog.wangqi.love/articles/redis/media/cluster-nodes.png"></a></p>
+<p><code>cluster nodes</code>命令的输出看起来有点复杂，它的含义如下：</p>
+<ul>
+<li>  节点 ID</li>
+<li>  IP: 端口</li>
+<li>  标志：master, slave, myself, fail …</li>
+<li>  如果是从节点，这里是它的从节点 NODE ID</li>
+<li>  集群最近一次向节点发送 PING 命令之后，过去了多长时间还没接到回复</li>
+<li>  节点最近一次返回 PONG 回复的时间</li>
+<li>  节点的配置纪元 (configuration epoch)</li>
+<li>  本节点的网络连接情况：例如 connected</li>
+<li>  节点目前包含的槽：例如<code>127.0.0.1:6380</code>目前包含号码为 0 至 5460 的哈希槽</li>
+</ul>
+<p>在集群中存入键值：</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/cluster-set.png"><img src="https://blog.wangqi.love/articles/redis/media/cluster-set.png"></a></p>
+<p>可以看到，test 键计算得到的槽 (slot) 值是 6918，因此被保存在<code>127.0.0.1:6381</code>节点中。</p>
+<h2 id="集群添加节点"><a href="#集群添加节点" class="headerlink" title="集群添加节点"></a><a href="#%E9%9B%86%E7%BE%A4%E6%B7%BB%E5%8A%A0%E8%8A%82%E7%82%B9" title="集群添加节点"></a>集群添加节点</h2><p>根据添加节点类型的不同，有两种方法来添加新节点：</p>
+<ul>
+<li>  主节点：如果添加的是主节点，那么我们需要创建一个空节点，然后将某些哈希槽移动到这个空节点里面</li>
+<li>  从节点：如果添加的是从节点，我们也需要创建一个空节点，然后把这个新节点设置成集群中某个主节点的复制品</li>
+</ul>
+<h3 id="添加节点"><a href="#添加节点" class="headerlink" title="添加节点"></a><a href="#%E6%B7%BB%E5%8A%A0%E8%8A%82%E7%82%B9" title="添加节点"></a>添加节点</h3><p>首先我们启动一个新节点<code>127.0.0.1:6386</code>，配置与之前节点的一致。</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/cluster-6386.png"><img src="https://blog.wangqi.love/articles/redis/media/cluster-6386.png"></a></p>
+<p>执行以下命令，将这个新节点添加到集群中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;redis-trib.rb add-node 127.0.0.1:6386 127.0.0.1:6380</span><br></pre></td></tr></table></figure>
+<p>使用<code>addnode</code>命令来添加节点，第一个参数是新节点的地址，第二个参数是任意一个已经存在的节点的 IP 和端口。</p>
+<p>结果如图所示：</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/redis-trib-addnodes.png"><img src="https://blog.wangqi.love/articles/redis/media/redis-trib-addnodes.png"></a></p>
+<p>查看刚才新增的节点：</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/cluster-nodes-2.png"><img src="https://blog.wangqi.love/articles/redis/media/cluster-nodes-2.png"></a></p>
+<p>新节点现在已经连接上了集群，成为集群的一份子，并且可以对客户端的命令请求进行转向了，但是和其他主节点相比，新节点还有两点区别：</p>
+<ul>
+<li>  新节点没有包含任何数据，因为它没有包含任何哈希槽</li>
+<li>  尽管新节点没有包含任何哈希槽，但它仍然是一个主节点，所以在集群需要将某个从节点升级为新的主节点时，这个新节点不会被选中。</li>
+</ul>
+<h3 id="将新增节点变成从节点"><a href="#将新增节点变成从节点" class="headerlink" title="将新增节点变成从节点"></a><a href="#%E5%B0%86%E6%96%B0%E5%A2%9E%E8%8A%82%E7%82%B9%E5%8F%98%E6%88%90%E4%BB%8E%E8%8A%82%E7%82%B9" title="将新增节点变成从节点"></a>将新增节点变成从节点</h3><p>有两种方法添加到从节点，可以像添加主节点一样使用<code>redis-trib</code>命令，也可以像下面的例子一样使用<code>--slave</code>选项：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;redis-trib.rb add-node --slave 127.0.0.1:6386 127.0.0.1:6380</span><br></pre></td></tr></table></figure>
+<p>此处的命令和添加一个主节点命令类似。此处并没有指定添加的这个从节点的主节点，这种情况下系统会在集群主节点中随机选取一个作为这个从节点的主节点。</p>
+<p>你可以通过下面的命令指定主节点：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;redis-trib.rb add-node --slave --master-id ece3542747477d7147d13725d17a246c89aeb38f 127.0.0.1:6386 127.0.0.1:6380</span><br></pre></td></tr></table></figure>
+<p>也可以使用<code>CLUSTER REPLICATE</code>命令添加从节点</p>
+<p>例如，要给主节点<code>127.0.0.1:6381</code>添加一个从节点，该节点的 ID 是<code>ece3542747477d7147d13725d17a246c89aeb38f</code>。我们只需要在<code>127.0.0.1:6386</code>节点上执行以下命令:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cluster replicate ece3542747477d7147d13725d17a246c89aeb38f</span><br></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/cluster-replicate.png"><img src="https://blog.wangqi.love/articles/redis/media/cluster-replicate.png"></a></p>
+<p>查看节点状态：</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/cluster-nodes-3.png"><img src="https://blog.wangqi.love/articles/redis/media/cluster-nodes-3.png"></a></p>
+<p>可以看到<code>127.0.0.1:6381</code>节点现在有了两个从节点。</p>
+<h3 id="将新增节点变成主节点"><a href="#将新增节点变成主节点" class="headerlink" title="将新增节点变成主节点"></a><a href="#%E5%B0%86%E6%96%B0%E5%A2%9E%E8%8A%82%E7%82%B9%E5%8F%98%E6%88%90%E4%B8%BB%E8%8A%82%E7%82%B9" title="将新增节点变成主节点"></a>将新增节点变成主节点</h3><p>使用<code>redis-trib</code>程序，将集群中的某些哈希槽移动到新节点里面，这个新节点就称为真正的主节点了。</p>
+<p>执行以下命令对集群中的哈希槽进行移动：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;redis-trib.rb reshard 127.0.0.1:6380</span><br></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/rehash.png"><img src="https://blog.wangqi.love/articles/redis/media/rehash.png"></a></p>
+<p>命令执行后，系统会提示我们要移动多少哈希槽，这里输入 1000</p>
+<p>然后还需要制定把这些哈希槽转移到哪个节点上，这里输入我们刚刚新增的<code>127.0.0.1:6386</code>节点 ID</p>
+<p>然后需要我们指定转移哪几个哈希槽，输入<code>all</code>表示从所有主节点中随机转移，凑够 1000 个哈希槽</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/rehash-2.png"><img src="https://blog.wangqi.love/articles/redis/media/rehash-2.png"></a></p>
+<p>然后再输入<code>yes</code>，redis 集群就开始分配哈希槽。</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/rehash-3.png"><img src="https://blog.wangqi.love/articles/redis/media/rehash-3.png"></a></p>
+<p>至此，一个新的主节点就添加完成了，执行命令查看现在的集群中节点的状态</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/cluster-4.png"><img src="https://blog.wangqi.love/articles/redis/media/cluster-4.png"></a></p>
+<p>可以看到<code>127.0.0.1:6386</code>节点分配了<code>0-332 5461-5794 10923-11255</code>段的哈希槽</p>
+<h2 id="集群删除节点"><a href="#集群删除节点" class="headerlink" title="集群删除节点"></a><a href="#%E9%9B%86%E7%BE%A4%E5%88%A0%E9%99%A4%E8%8A%82%E7%82%B9" title="集群删除节点"></a>集群删除节点</h2><h3 id="删除主节点"><a href="#删除主节点" class="headerlink" title="删除主节点"></a><a href="#%E5%88%A0%E9%99%A4%E4%B8%BB%E8%8A%82%E7%82%B9" title="删除主节点"></a>删除主节点</h3><p>如果删除的节点是主节点，这里我们删除<code>127.0.0.1:6386</code>节点，这个节点有 1000 个哈希槽</p>
+<p>首先要把节点中的哈希槽转移到其他节点中，执行下面命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;redis-trib.rb reshard 127.0.0.1:6386</span><br></pre></td></tr></table></figure>
+<p>系统会提示我们要移动多少哈希槽，这里移动 1000 个，因为<code>127.0.0.1:6386</code>节点有 1000 个哈希槽。</p>
+<p>然后系统提示我们输入要接收这些哈希槽的节点 ID，这里使用<code>127.0.0.1:6380</code>的节点 ID</p>
+<p>然后要我们选择从哪些节点中转出哈希槽，这里一定要输入<code>127.0.0.1:6386</code>这个节点的 ID</p>
+<p>最后输入<code>done</code>表示输入完毕。</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/rehash-4.png"><img src="https://blog.wangqi.love/articles/redis/media/rehash-4.png"></a></p>
+<p>哈希槽转移完毕后，使用下面的命令把这个节点删除</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;redis-trib.rb del-node 127.0.0.1:6380 dbd2ede12873806917e210dd5015eaacf0d3c2eb</span><br></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/del-master.png"><img src="https://blog.wangqi.love/articles/redis/media/del-master.png"></a></p>
+<h3 id="删除从节点"><a href="#删除从节点" class="headerlink" title="删除从节点"></a><a href="#%E5%88%A0%E9%99%A4%E4%BB%8E%E8%8A%82%E7%82%B9" title="删除从节点"></a>删除从节点</h3><p>如果节点是从节点，直接删除即可</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;redis-trib.rb del-node 127.0.0.1:6380 dbd2ede12873806917e210dd5015eaacf0d3c2eb</span><br></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/del-slave.png"><img src="https://blog.wangqi.love/articles/redis/media/del-slave.png"></a></p>
+<h2 id="测试故障转移"><a href="#测试故障转移" class="headerlink" title="测试故障转移"></a><a href="#%E6%B5%8B%E8%AF%95%E6%95%85%E9%9A%9C%E8%BD%AC%E7%A7%BB" title="测试故障转移"></a>测试故障转移</h2><p>要触发一次故障转移，最简单的办法就是令集群中的某个主节点进入下线状态。</p>
+<p>首先列出所有的节点：</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/cluster-5.png"><img src="https://blog.wangqi.love/articles/redis/media/cluster-5.png"></a></p>
+<p>通过命令得知，<code>127.0.0.1:6380</code>、<code>127.0.0.1:6381</code>、<code>127.0.0.1:6382</code>都是主节点，然后我们通过向<code>127.0.0.1:6382</code>节点发送<code>DEBUB SEGFAULT</code>命令，让这个主节点崩溃。</p>
+<p>让我们在使用<code>cluster nodes</code>命令，查看集群在执行故障转移操作之后，节点的分布情况</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/cluster-6.png"><img src="https://blog.wangqi.love/articles/redis/media/cluster-6.png"></a></p>
+<p>可以看到，<code>127.0.0.1:6382</code>节点已经断开连接了，原本<code>127.0.0.1:6382</code>节点的从节点<code>127.0.0.1:6385</code>现在成为了主节点。</p>
+<p>现在让我们再次启动<code>127.0.0.1:6382</code>节点，可以看到重启之后<code>127.0.0.1:6382</code>变成了<code>127.0.0.1:6385</code>节点的从节点。</p>
+<p><a target="_blank" rel="noopener" href="https://blog.wangqi.love/articles/redis/media/cluster-7.png"><img src="https://blog.wangqi.love/articles/redis/media/cluster-7.png"></a></p>
+<h2 id="Java-客户端使用"><a href="#Java-客户端使用" class="headerlink" title="Java 客户端使用"></a><a href="#Java%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%BD%BF%E7%94%A8" title="Java客户端使用"></a>Java 客户端使用</h2><p>Jedis 客户端的使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">public class JedisDemo &#123;</span><br><span class="line">    Logger logger &#x3D; LoggerFactory.getLogger(JedisDemo.class);</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void test() &#123;</span><br><span class="line">        HashSet&lt;HostAndPort&gt; nodes &#x3D; new HashSet&lt;&gt;();</span><br><span class="line">        nodes.add(new HostAndPort(&quot;127.0.0.1&quot;, 6380));</span><br><span class="line">        nodes.add(new HostAndPort(&quot;127.0.0.1&quot;, 6381));</span><br><span class="line">        nodes.add(new HostAndPort(&quot;127.0.0.1&quot;, 6382));</span><br><span class="line">        nodes.add(new HostAndPort(&quot;127.0.0.1&quot;, 6383));</span><br><span class="line">        nodes.add(new HostAndPort(&quot;127.0.0.1&quot;, 6384));</span><br><span class="line">        nodes.add(new HostAndPort(&quot;127.0.0.1&quot;, 6385));</span><br><span class="line"></span><br><span class="line">        JedisPoolConfig poolConfig &#x3D; new JedisPoolConfig();</span><br><span class="line">        JedisCluster jedisCluster &#x3D; new JedisCluster(nodes, poolConfig);</span><br><span class="line">        logger.info(jedisCluster.get(&quot;test&quot;));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Redisson 客户端的使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">public class Demo &#123;</span><br><span class="line">    Logger logger &#x3D; LoggerFactory.getLogger(Demo.class);</span><br><span class="line"></span><br><span class="line">    private static RedissonClient instance;</span><br><span class="line"></span><br><span class="line">    public Demo() &#123;</span><br><span class="line">        Config config &#x3D; new Config();</span><br><span class="line">        config.useClusterServers()</span><br><span class="line">                .setScanInterval(2000)</span><br><span class="line">                .addNodeAddress(&quot;redis:&#x2F;&#x2F;127.0.0.1:6380&quot;)</span><br><span class="line">                .addNodeAddress(&quot;redis:&#x2F;&#x2F;127.0.0.1:6381&quot;)</span><br><span class="line">                .addNodeAddress(&quot;redis:&#x2F;&#x2F;127.0.0.1:6382&quot;)</span><br><span class="line">                .addNodeAddress(&quot;redis:&#x2F;&#x2F;127.0.0.1:6383&quot;)</span><br><span class="line">                .addNodeAddress(&quot;redis:&#x2F;&#x2F;127.0.0.1:6384&quot;)</span><br><span class="line">                .addNodeAddress(&quot;redis:&#x2F;&#x2F;127.0.0.1:6385&quot;);</span><br><span class="line">        instance &#x3D; Redisson.create(config);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/u011204847/article/details/51307044">https://blog.csdn.net/u011204847/article/details/51307044</a><br><a target="_blank" rel="noopener" href="https://www.cnblogs.com/yjmyzz/p/4106142.html">https://www.cnblogs.com/yjmyzz/p/4106142.html</a><br><a target="_blank" rel="noopener" href="https://blog.csdn.net/moyu_2012/article/details/47856949">https://blog.csdn.net/moyu_2012/article/details/47856949</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/afb678794a0e">https://www.jianshu.com/p/afb678794a0e</a><br><a target="_blank" rel="noopener" href="http://www.redis.cn/topics/cluster-tutorial.html">http://www.redis.cn/topics/cluster-tutorial.html</a></p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Exqlnet</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="http://blog.exql.net/2020/03/25/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91Redis%E5%A4%9A%E6%9C%BA%E6%A8%A1%E5%BC%8F%E6%96%B9%E6%A1%88/">http://blog.exql.net/2020/03/25/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91Redis%E5%A4%9A%E6%9C%BA%E6%A8%A1%E5%BC%8F%E6%96%B9%E6%A1%88/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://blog.exql.net" target="_blank">Exqlnet's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Redis/">Redis</a></div><div class="post_share"><div class="social-share" data-image="/img/default_cover.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2020/03/27/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%9130%E5%BC%A0%E5%9B%BE%E5%B8%A6%E4%BD%A0%E5%BD%BB%E5%BA%95%E7%90%86%E8%A7%A3%E7%BA%A2%E9%BB%91%E6%A0%91/"><img class="prev-cover" src="/img/default_cover.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">【转载】30张图带你彻底理解红黑树</div></div></a></div><div class="next-post pull-right"><a href="/2020/03/25/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91Linux-IO-%E6%A8%A1%E5%BC%8F%E5%8F%8A-select%E3%80%81poll%E3%80%81epoll-%E8%AF%A6%E8%A7%A3/"><img class="next-cover" src="/img/default_cover.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">【转载】Linux IO 模式及 select、poll、epoll 详解</div></div></a></div></nav></div><div class="aside_content" id="aside_content"><div class="card-widget card-info"><div class="card-content"><div class="card-info-avatar is-center"><img class="avatar-img" src="/img/avatar.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">Exqlnet</div><div class="author-info__description">Coding for life</div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">21</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a></div><div class="card-info-data-item is-center"><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/exqlnet" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:exqlnet@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="card-content"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="toc-number">1.</span> <span class="toc-text">注意事项</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Java-%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="toc-number">2.</span> <span class="toc-text">Java 客户端的使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Sentinel-%E7%9A%84%E9%85%8D%E7%BD%AE"><span class="toc-number">3.</span> <span class="toc-text">Sentinel 的配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8-sentinel"><span class="toc-number">4.</span> <span class="toc-text">启动 sentinel</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%85%E9%9A%9C%E8%BD%AC%E7%A7%BB"><span class="toc-number">5.</span> <span class="toc-text">故障转移</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Java-%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84%E4%BD%BF%E7%94%A8-1"><span class="toc-number">6.</span> <span class="toc-text">Java 客户端的使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E9%85%8D%E7%BD%AE"><span class="toc-number">7.</span> <span class="toc-text">集群配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E6%B7%BB%E5%8A%A0%E8%8A%82%E7%82%B9"><span class="toc-number">8.</span> <span class="toc-text">集群添加节点</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B7%BB%E5%8A%A0%E8%8A%82%E7%82%B9"><span class="toc-number">8.1.</span> <span class="toc-text">添加节点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%86%E6%96%B0%E5%A2%9E%E8%8A%82%E7%82%B9%E5%8F%98%E6%88%90%E4%BB%8E%E8%8A%82%E7%82%B9"><span class="toc-number">8.2.</span> <span class="toc-text">将新增节点变成从节点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%86%E6%96%B0%E5%A2%9E%E8%8A%82%E7%82%B9%E5%8F%98%E6%88%90%E4%B8%BB%E8%8A%82%E7%82%B9"><span class="toc-number">8.3.</span> <span class="toc-text">将新增节点变成主节点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E5%88%A0%E9%99%A4%E8%8A%82%E7%82%B9"><span class="toc-number">9.</span> <span class="toc-text">集群删除节点</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E4%B8%BB%E8%8A%82%E7%82%B9"><span class="toc-number">9.1.</span> <span class="toc-text">删除主节点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E4%BB%8E%E8%8A%82%E7%82%B9"><span class="toc-number">9.2.</span> <span class="toc-text">删除从节点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E6%95%85%E9%9A%9C%E8%BD%AC%E7%A7%BB"><span class="toc-number">10.</span> <span class="toc-text">测试故障转移</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Java-%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%BD%BF%E7%94%A8"><span class="toc-number">11.</span> <span class="toc-text">Java 客户端使用</span></a></li></ol></div></div></div><div class="card-widget card-recent-post"><div class="card-content"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2020/08/14/%E5%B8%B8%E7%94%A8-Shell-%E6%B5%8B%E8%AF%95%E6%9D%A1%E4%BB%B6/" title="常用 Shell 测试条件"><img src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="常用 Shell 测试条件"/></a><div class="content"><a class="title" href="/2020/08/14/%E5%B8%B8%E7%94%A8-Shell-%E6%B5%8B%E8%AF%95%E6%9D%A1%E4%BB%B6/" title="常用 Shell 测试条件">常用 Shell 测试条件</a><time datetime="2020-08-14T11:36:31.000Z" title="发表于 2020-08-14 19:36:31">2020-08-14</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2020/07/22/%E7%AE%80%E8%BF%B0Kafka%E6%B6%88%E6%81%AF%E9%A1%BA%E5%BA%8F%E9%97%AE%E9%A2%98/" title="简述Kafka消息顺序问题及应对方案`"><img src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="简述Kafka消息顺序问题及应对方案`"/></a><div class="content"><a class="title" href="/2020/07/22/%E7%AE%80%E8%BF%B0Kafka%E6%B6%88%E6%81%AF%E9%A1%BA%E5%BA%8F%E9%97%AE%E9%A2%98/" title="简述Kafka消息顺序问题及应对方案`">简述Kafka消息顺序问题及应对方案`</a><time datetime="2020-07-22T06:26:48.000Z" title="发表于 2020-07-22 14:26:48">2020-07-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2020/04/06/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91Git-%E5%86%85%E9%83%A8%E5%82%A8%E5%AD%98%E5%8E%9F%E7%90%86/" title="【转载】Git 内部储存原理"><img src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【转载】Git 内部储存原理"/></a><div class="content"><a class="title" href="/2020/04/06/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91Git-%E5%86%85%E9%83%A8%E5%82%A8%E5%AD%98%E5%8E%9F%E7%90%86/" title="【转载】Git 内部储存原理">【转载】Git 内部储存原理</a><time datetime="2020-04-05T20:28:26.000Z" title="发表于 2020-04-06 04:28:26">2020-04-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2020/04/05/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91MySQL-explain-%E8%AF%A6%E8%A7%A3/" title="【转载】MySQL explain 详解"><img src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【转载】MySQL explain 详解"/></a><div class="content"><a class="title" href="/2020/04/05/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91MySQL-explain-%E8%AF%A6%E8%A7%A3/" title="【转载】MySQL explain 详解">【转载】MySQL explain 详解</a><time datetime="2020-04-04T18:01:18.000Z" title="发表于 2020-04-05 02:01:18">2020-04-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2020/03/30/%E5%93%88%E5%B8%8C%E5%86%B2%E7%AA%81%E7%9A%844%E7%A7%8D%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95/" title="哈希冲突的4种解决办法"><img src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="哈希冲突的4种解决办法"/></a><div class="content"><a class="title" href="/2020/03/30/%E5%93%88%E5%B8%8C%E5%86%B2%E7%AA%81%E7%9A%844%E7%A7%8D%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95/" title="哈希冲突的4种解决办法">哈希冲突的4种解决办法</a><time datetime="2020-03-30T15:35:36.000Z" title="发表于 2020-03-30 23:35:36">2020-03-30</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 By Exqlnet</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></div></body></html>

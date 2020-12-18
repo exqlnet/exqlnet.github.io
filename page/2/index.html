@@ -1,0 +1,312 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Exqlnet's Blog</title><meta name="keywords" content="Exqlnet"><meta name="author" content="Exqlnet"><meta name="copyright" content="Exqlnet"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="Coding for life">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Exqlnet&#39;s Blog">
+<meta property="og:url" content="http://blog.exql.net/page/2/index.html">
+<meta property="og:site_name" content="Exqlnet&#39;s Blog">
+<meta property="og:description" content="Coding for life">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://blog.exql.net/img/avatar.jpeg">
+<meta property="article:author" content="Exqlnet">
+<meta property="article:tag" content="Exqlnet">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://blog.exql.net/img/avatar.jpeg"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://blog.exql.net/page/2/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isanchor: false
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: false,
+  isHome: true,
+  isHighlightShrink: false,
+  isToc: false,
+  postUpdate: '2020-12-18 13:37:34'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/img/avatar.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">21</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fa fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fa fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fa fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fa fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fa fa-link"></i><span> 友链</span></a></div></div></div></div><div id="body-wrap"><header class="full_page" id="page-header" style="background-image: url(/img/banner.jpg)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Exqlnet's Blog</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fa fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fa fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fa fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fa fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fa fa-link"></i><span> 友链</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="site-info"><h1 id="site-title">Exqlnet's Blog</h1><div id="site-subtitle"><span id="subtitle"></span></div><div id="site_social_icons"><a class="social-icon" href="https://github.com/exqlnet" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:exqlnet@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div><div id="scroll-down"><i class="fas fa-angle-down scroll-down-effects"></i></div></header><main class="layout" id="content-inner"><div class="recent-posts" id="recent-posts"><div class="recent-post-item"><div class="post_cover left_radius"><a href="/2020/03/27/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%9130%E5%BC%A0%E5%9B%BE%E5%B8%A6%E4%BD%A0%E5%BD%BB%E5%BA%95%E7%90%86%E8%A7%A3%E7%BA%A2%E9%BB%91%E6%A0%91/" title="【转载】30张图带你彻底理解红黑树">     <img class="post_bg" src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【转载】30张图带你彻底理解红黑树"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/03/27/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%9130%E5%BC%A0%E5%9B%BE%E5%B8%A6%E4%BD%A0%E5%BD%BB%E5%BA%95%E7%90%86%E8%A7%A3%E7%BA%A2%E9%BB%91%E6%A0%91/" title="【转载】30张图带你彻底理解红黑树">【转载】30张图带你彻底理解红黑树</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-03-26T17:11:14.000Z" title="发表于 2020-03-27 01:11:14">2020-03-27</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/">数据结构与算法</a></span></div><div class="content">转载自 https://www.jianshu.com/p/e136ec79235c
+写在前面当在 10 亿数据中只需要进行 10 几次比较就能查找到目标时，不禁感叹编程之魅力！人类之伟大呀！ —— 学红黑树有感。
+终于，在学习了几天的红黑树相关的知识后，我想把我所学所想和所感分享给大家。红黑树是一种比较难的数据结构，要完全搞懂非常耗时耗力，红黑树怎么自平衡？什么时候需要左旋或右旋？插入和删除破坏了树的平衡后怎么处理？等等一连串的问题在学习前困扰着我。如果你在学习过程中也会存在我的疑问，那么本文对你会有帮助，本文帮助你全面、彻底地理解红黑树！
+本文将通过图文的方式讲解红黑树的知识点，并且不会涉及到任何代码，相信我，在懂得红黑树实现原理前，看代码会一头雾水的，当原理懂了，代码也就按部就班写而已，没任何难度。
+阅读本文你需具备知识点：
+
+  二叉查找树
+  完美平衡二叉树
+
+事不宜迟，让我们进入正题吧。
+正文红黑树也是二叉查找树，我们知道，二叉查找树这一数据结构并不难，而红黑树之所以难是难在它是自平衡的二叉查找树，在进行插入和删除等可能会破坏树的平衡的操作时，需要重新自处理达到平衡状态。现 ...</div></div></div><div class="recent-post-item"><div class="post_cover right_radius"><a href="/2020/03/25/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91Redis%E5%A4%9A%E6%9C%BA%E6%A8%A1%E5%BC%8F%E6%96%B9%E6%A1%88/" title="【转载】Redis多机模式方案">     <img class="post_bg" src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【转载】Redis多机模式方案"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/03/25/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91Redis%E5%A4%9A%E6%9C%BA%E6%A8%A1%E5%BC%8F%E6%96%B9%E6%A1%88/" title="【转载】Redis多机模式方案">【转载】Redis多机模式方案</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-03-25T13:12:54.000Z" title="发表于 2020-03-25 21:12:54">2020-03-25</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a></span></div><div class="content">
+本文转载自 https://blog.wangqi.love/articles/redis/Redis%E5%A4%9A%E6%9C%BA%E6%A8%A1%E5%BC%8F.html
+
+Redis 单机模式会受到单机性能、单机容量、稳定性等的限制。因此在生产环境，一般会使用多机的方式来保证应用的稳定。Redis 的多机模式有以下三种：
+
+ 主从复制模式
+ 哨兵模式
+ 集群模式
+
+下文来详细描述一下三种模式的使用。
+Redis 的复制功能是支持多个数据库之间的数据同步。一类是主数据库 (master) 一类是从数据库(slave)，主数据库可以进行读写操作，当发生写操作的时候自动将数据同步到从数据库，而从数据库一般是只读的，并接收主数据库同步过来的数据，一个主数据库可以有多个从数据库，而一个从数据库只能有一个主数据库。
+通过 Redis 的复制功能可以很好的实现数据库的读写分离，提高服务器的负载能力。主数据库主要进行写操作，而从数据库负责读操作。
+我们在同一台机器的不同端口启动 Redis 来模拟多机的情况：
+12主节点：127.0.0.1 6380从节点：127.0.0.1 638 ...</div></div></div><div class="recent-post-item"><div class="post_cover left_radius"><a href="/2020/03/25/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91Linux-IO-%E6%A8%A1%E5%BC%8F%E5%8F%8A-select%E3%80%81poll%E3%80%81epoll-%E8%AF%A6%E8%A7%A3/" title="【转载】Linux IO 模式及 select、poll、epoll 详解">     <img class="post_bg" src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【转载】Linux IO 模式及 select、poll、epoll 详解"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/03/25/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91Linux-IO-%E6%A8%A1%E5%BC%8F%E5%8F%8A-select%E3%80%81poll%E3%80%81epoll-%E8%AF%A6%E8%A7%A3/" title="【转载】Linux IO 模式及 select、poll、epoll 详解">【转载】Linux IO 模式及 select、poll、epoll 详解</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-03-25T07:53:22.000Z" title="发表于 2020-03-25 15:53:22">2020-03-25</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/Linux%E8%BF%90%E7%BB%B4/">Linux运维</a></span></div><div class="content">
+【转载】原文地址 https://segmentfault.com/a/1190000003063859
+
+
+注：本文是对众多博客的学习和总结，可能存在理解错误。请带着怀疑的眼光，同时如果有错误希望能指出。
+
+同步 IO 和异步 IO，阻塞 IO 和非阻塞 IO 分别是什么，到底有什么区别？不同的人在不同的上下文下给出的答案是不同的。所以先限定一下本文的上下文。
+1本文讨论的背景是Linux环境下的network IO。
+在进行解释之前，首先要说明几个概念：  
+
+用户空间和内核空间  
+进程切换  
+进程的阻塞  
+文件描述符  
+缓存 I/O
+
+用户空间与内核空间现在操作系统都是采用虚拟存储器，那么对 32 位操作系统而言，它的寻址空间（虚拟存储空间）为 4G（2 的 32 次方）。操作系统的核心是内核，独立于普通的应用程序，可以访问受保护的内存空间，也有访问底层硬件设备的所有权限。为了保证用户进程不能直接操作内核（kernel），保证内核的安全，操心系统将虚拟空间划分为两部分，一部分为内核空间，一部分为用户空间。针对 linux 操作系统而言，将最高的 1G 字节（从虚拟地址  ...</div></div></div><div class="recent-post-item"><div class="post_cover right_radius"><a href="/2020/03/23/Windows%E4%B8%8B%E7%A6%81%E7%94%A8%E7%AC%94%E8%AE%B0%E6%9C%AC%E7%94%B5%E8%84%91%E8%87%AA%E5%B8%A6%E9%94%AE%E7%9B%98/" title="Windows下禁用笔记本电脑自带键盘">     <img class="post_bg" src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Windows下禁用笔记本电脑自带键盘"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/03/23/Windows%E4%B8%8B%E7%A6%81%E7%94%A8%E7%AC%94%E8%AE%B0%E6%9C%AC%E7%94%B5%E8%84%91%E8%87%AA%E5%B8%A6%E9%94%AE%E7%9B%98/" title="Windows下禁用笔记本电脑自带键盘">Windows下禁用笔记本电脑自带键盘</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-03-22T20:13:20.000Z" title="发表于 2020-03-23 04:13:20">2020-03-23</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/win%E7%B3%BB%E5%88%97/">win系列</a></span></div><div class="content">1.用管理员身份打开cmd命令提示符，运行
+1sc config i8042prt start=disabled
+2.重新启动
+3.重新开启时运行
+1sc config i8042prt start=auto</div></div></div><div class="recent-post-item"><div class="post_cover left_radius"><a href="/2020/03/22/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91%E5%8F%AF%E4%BC%B8%E7%BC%A9%E6%80%A7-%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7-Scalable-scalability/" title="【转载】可伸缩性/可扩展性(Scalable/scalability)">     <img class="post_bg" src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【转载】可伸缩性/可扩展性(Scalable/scalability)"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/03/22/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91%E5%8F%AF%E4%BC%B8%E7%BC%A9%E6%80%A7-%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7-Scalable-scalability/" title="【转载】可伸缩性/可扩展性(Scalable/scalability)">【转载】可伸缩性/可扩展性(Scalable/scalability)</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-03-22T14:52:52.000Z" title="发表于 2020-03-22 22:52:52">2020-03-22</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/%E6%9E%B6%E6%9E%84/">架构</a></span></div><div class="content">转载自 https://www.jdon.com/scalable.html
+可伸缩性/可扩展性(Scalable/scalability)可伸缩性(可扩展性)是一种对软件系统计算处理能力的设计指标，高可伸缩性代表一种弹性，在系统扩展成长过程中，软件能够保证旺盛的生命力，通过很少的改动甚至只是硬件设备的添置，就能实现整个系统处理能力的线性增长，实现高吞吐量和低延迟高性能。
+可伸缩性和纯粹性能调优有本质区别， 可伸缩性是高性能、低成本和可维护性等诸多因素的综合考量和平衡，可伸缩性讲究平滑线性的性能提升，更侧重于系统的水平伸缩，通过廉价的服务器实现分布式计算；而普通性能优化只是单台机器的性能指标优化。他们共同点都是根据应用系统特点在吞吐量和延迟之间进行一个侧重选择，当然水平伸缩分区后会带来CAP定理约束。
+软件的可扩展性设计非常重要，但又比较难以掌握，业界试图通过云计算或高并发语言等方式节省开发者精力，但是，无论采取什么技术，如果应用系统内部是铁板一块，例如严重依赖数据库，系统达到一定访问规模，负载都集中到一两台数据库服务器上，这时进行分区扩展伸缩就比较困难，正如Hibernate框架创建 ...</div></div></div><div class="recent-post-item"><div class="post_cover right_radius"><a href="/2020/03/17/%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8kubeadm%E6%9E%84%E5%BB%BAK8S%E9%9B%86%E7%BE%A4/" title="简单使用kubeadm构建K8S集群">     <img class="post_bg" src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="简单使用kubeadm构建K8S集群"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/03/17/%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8kubeadm%E6%9E%84%E5%BB%BAK8S%E9%9B%86%E7%BE%A4/" title="简单使用kubeadm构建K8S集群">简单使用kubeadm构建K8S集群</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-03-17T09:35:44.000Z" title="发表于 2020-03-17 17:35:44">2020-03-17</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/Linux%E8%BF%90%E7%BB%B4/">Linux运维</a></span></div><div class="content">环境
+主机：macOS Catalina 10.15
+u1：ubuntu 18.04 (parallel 2GiB)
+u2：ubuntu 18.04 (parallel 2GiB, master node)
+
+准备
+container runtime (Docker/containerd/CRI-O) 
+这里使用的是Docker，Docker安装说明网上已有教程
+
+kubeadm、kubelet、kubectl，国内请使用代理，否则无法访问google.com
+12345678sudo apt-get update &amp;&amp; sudo apt-get install -y apt-transport-https curlcurl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -cat &lt;&lt;EOF | sudo tee /etc/apt/sources.list.d/kubernetes.listdeb https://apt.kubernetes.io/ k ...</div></div></div><div class="recent-post-item"><div class="post_cover left_radius"><a href="/2019/12/28/IPv4%E5%88%86%E7%B1%BB%E7%BD%91%E7%BB%9C%E3%80%81CIDR%E3%80%81%E5%AD%90%E7%BD%91%E5%92%8C%E4%B8%93%E6%9C%89%E7%BD%91%E7%BB%9C%E4%BB%8B%E7%BB%8D/" title="IPv4分类网络、CIDR、子网和专有网络介绍">     <img class="post_bg" src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="IPv4分类网络、CIDR、子网和专有网络介绍"></a></div><div class="recent-post-info"><a class="article-title" href="/2019/12/28/IPv4%E5%88%86%E7%B1%BB%E7%BD%91%E7%BB%9C%E3%80%81CIDR%E3%80%81%E5%AD%90%E7%BD%91%E5%92%8C%E4%B8%93%E6%9C%89%E7%BD%91%E7%BB%9C%E4%BB%8B%E7%BB%8D/" title="IPv4分类网络、CIDR、子网和专有网络介绍">IPv4分类网络、CIDR、子网和专有网络介绍</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2019-12-28T06:57:16.000Z" title="发表于 2019-12-28 14:57:16">2019-12-28</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a></span></div><div class="content">IPv4分类网络背景IPv4地址起初是用8位网络地址+24位主机地址来表示，这导致了独立网络的数量不能太多（最多254个），于是出现了分类网络。
+介绍在分类网络下，IP地址被分为5类：
+
+
+
+Class
+前缀位
+网络地址位数
+剩余的位数
+网络数
+每个网络的主机数
+
+
+
+A类地址
+0
+8
+24
+128
+16,777,214
+
+
+B类地址
+10
+16
+16
+16,384
+65,534
+
+
+C类地址
+110
+24
+8
+2,097,152
+254
+
+
+D类地址（群播）
+1110
+未定义
+未定义
+未定义
+未定义
+
+
+E类地址（保留）
+1111
+未定义
+未定义
+未定义
+未定义
+
+
+此时的网络没有子网、掩码的概念，因为掩码可以从IP地址推出，所有的网络设备都会通过查看IP地址的前几位来确定地址所属的类别。
+结局鉴于IPv4仍然在不断变得短缺，主要问题是：多数的网站对c类的网络地址来说太大了，因此它们都得到了b类的地址。分类网络于1993年被无类别域间路由（CIDR）取代以解决这个问题。
+无类别域间路由（CIDR）CIDR是一个用于给用户分配IP地址以及在互联网上有效地路由IP数据包的对IP地址进行归 ...</div></div></div><div class="recent-post-item"><div class="post_cover right_radius"><a href="/2019/12/01/Collections-in-Java/" title="Collections in Java">     <img class="post_bg" src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Collections in Java"></a></div><div class="recent-post-info"><a class="article-title" href="/2019/12/01/Collections-in-Java/" title="Collections in Java">Collections in Java</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2019-12-01T08:47:40.000Z" title="发表于 2019-12-01 16:47:40">2019-12-01</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/Java/">Java</a></span></div><div class="content">Java 中的集合框图
+
+
+</div></div></div><div class="recent-post-item"><div class="post_cover left_radius"><a href="/2019/09/26/SSH%E9%9A%A7%E9%81%93%E5%AE%9E%E7%8E%B0/" title="SSH隧道实现">     <img class="post_bg" src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="SSH隧道实现"></a></div><div class="recent-post-info"><a class="article-title" href="/2019/09/26/SSH%E9%9A%A7%E9%81%93%E5%AE%9E%E7%8E%B0/" title="SSH隧道实现">SSH隧道实现</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2019-09-26T08:33:06.000Z" title="发表于 2019-09-26 16:33:06">2019-09-26</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/Linux%E8%BF%90%E7%BB%B4/">Linux运维</a></span></div><div class="content">场景在外面要连接自己家里的电脑（Linux/MacOS），实现内网穿透
+设备
+一台能上网的Linux/MacOS主机
+一台拥有公网IP的服务器
+
+命令
+ssh -L 本地端口转发，访问本地的某个端口如同访问服务器的端口
+ssh -R 远程端口转发，访问服务器的某个端口如同访问本地的端口
+ssh -D 动态端口转发，用于代理
+
+步骤
+在服务器上设置sshd允许监听所有IP
+
+12sudo echo &quot;GatewayPorts yes&quot; &gt;&gt; /etc/ssh/sshd_confgsudo systemctl restart sshd
+
+一步到位：在本地主机上设置远程端口转发。服务器开始监听2222端口，访问服务器2222端口如同访问本地主机22端口
+
+1ssh -R 2222:localhost:22 user@server -N
+
+在任意可上网主机上连接以上本地主机。其中user对应本地主机的用户名，server是服务器地址。连接成功即OK。
+
+1ssh user@server -p 2222
+使用本地主机上网在任意可上网主机执行如下命令即可连接到本地主 ...</div></div></div><div class="recent-post-item"><div class="post_cover right_radius"><a href="/2019/07/02/%E7%94%A8iptables%E4%B8%AD%E8%BD%ACShadowsocks/" title="用iptables中转Shadowsocks">     <img class="post_bg" src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="用iptables中转Shadowsocks"></a></div><div class="recent-post-info"><a class="article-title" href="/2019/07/02/%E7%94%A8iptables%E4%B8%AD%E8%BD%ACShadowsocks/" title="用iptables中转Shadowsocks">用iptables中转Shadowsocks</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2019-07-02T08:30:06.000Z" title="发表于 2019-07-02 16:30:06">2019-07-02</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/Linux%E8%BF%90%E7%BB%B4/">Linux运维</a></span></div><div class="content">以下操作在中转服务器上进行
+启用iptables转发1vi /etc/sysctl.conf
+将 net.ipv4.ip_forward=0 ，修改成 net.ipv4.ip_forward=1
+编辑完后使用以下命令让配置立即生效
+1sysctl -p
+添加iptables规则1234iptables -t nat -A PREROUTING -p tcp --dport [端口号] -j DNAT --to-destination [目标IP]iptables -t nat -A PREROUTING -p udp --dport [端口号] -j DNAT --to-destination [目标IP]iptables -t nat -A POSTROUTING -p tcp -d [目标IP] --dport [端口号] -j SNAT --to-source [本地服务器公网IP]iptables -t nat -A POSTROUTING -p udp -d [目标IP] --dport [端口号] -j SNAT --to-source [本地服务器公网IP]
+此时，中转服 ...</div></div></div><nav id="pagination"><div class="pagination"><a class="extend prev" rel="prev" href="/"><i class="fas fa-chevron-left fa-fw"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/3/"><i class="fas fa-chevron-right fa-fw"></i></a></div></nav></div><div class="aside_content" id="aside_content"><div class="card-widget card-info"><div class="card-content"><div class="card-info-avatar is-center"><img class="avatar-img" src="/img/avatar.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">Exqlnet</div><div class="author-info__description">Coding for life</div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">21</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a></div><div class="card-info-data-item is-center"><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/exqlnet" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:exqlnet@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="card-content"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2020/08/14/%E5%B8%B8%E7%94%A8-Shell-%E6%B5%8B%E8%AF%95%E6%9D%A1%E4%BB%B6/" title="常用 Shell 测试条件"><img src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="常用 Shell 测试条件"/></a><div class="content"><a class="title" href="/2020/08/14/%E5%B8%B8%E7%94%A8-Shell-%E6%B5%8B%E8%AF%95%E6%9D%A1%E4%BB%B6/" title="常用 Shell 测试条件">常用 Shell 测试条件</a><time datetime="2020-08-14T11:36:31.000Z" title="发表于 2020-08-14 19:36:31">2020-08-14</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2020/07/22/%E7%AE%80%E8%BF%B0Kafka%E6%B6%88%E6%81%AF%E9%A1%BA%E5%BA%8F%E9%97%AE%E9%A2%98/" title="简述Kafka消息顺序问题及应对方案`"><img src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="简述Kafka消息顺序问题及应对方案`"/></a><div class="content"><a class="title" href="/2020/07/22/%E7%AE%80%E8%BF%B0Kafka%E6%B6%88%E6%81%AF%E9%A1%BA%E5%BA%8F%E9%97%AE%E9%A2%98/" title="简述Kafka消息顺序问题及应对方案`">简述Kafka消息顺序问题及应对方案`</a><time datetime="2020-07-22T06:26:48.000Z" title="发表于 2020-07-22 14:26:48">2020-07-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2020/04/06/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91Git-%E5%86%85%E9%83%A8%E5%82%A8%E5%AD%98%E5%8E%9F%E7%90%86/" title="【转载】Git 内部储存原理"><img src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【转载】Git 内部储存原理"/></a><div class="content"><a class="title" href="/2020/04/06/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91Git-%E5%86%85%E9%83%A8%E5%82%A8%E5%AD%98%E5%8E%9F%E7%90%86/" title="【转载】Git 内部储存原理">【转载】Git 内部储存原理</a><time datetime="2020-04-05T20:28:26.000Z" title="发表于 2020-04-06 04:28:26">2020-04-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2020/04/05/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91MySQL-explain-%E8%AF%A6%E8%A7%A3/" title="【转载】MySQL explain 详解"><img src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【转载】MySQL explain 详解"/></a><div class="content"><a class="title" href="/2020/04/05/%E3%80%90%E8%BD%AC%E8%BD%BD%E3%80%91MySQL-explain-%E8%AF%A6%E8%A7%A3/" title="【转载】MySQL explain 详解">【转载】MySQL explain 详解</a><time datetime="2020-04-04T18:01:18.000Z" title="发表于 2020-04-05 02:01:18">2020-04-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2020/03/30/%E5%93%88%E5%B8%8C%E5%86%B2%E7%AA%81%E7%9A%844%E7%A7%8D%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95/" title="哈希冲突的4种解决办法"><img src="/img/default_cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="哈希冲突的4种解决办法"/></a><div class="content"><a class="title" href="/2020/03/30/%E5%93%88%E5%B8%8C%E5%86%B2%E7%AA%81%E7%9A%844%E7%A7%8D%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95/" title="哈希冲突的4种解决办法">哈希冲突的4种解决办法</a><time datetime="2020-03-30T15:35:36.000Z" title="发表于 2020-03-30 23:35:36">2020-03-30</time></div></div></div></div></div><div class="card-widget card-categories"><div class="card-content"><div class="item-headline"><i class="fas fa-folder-open"></i><span>分类</span></div><ul class="card-category-list" id="aside-cat-list">
+            <li class="card-category-list-item "><a class="card-category-list-link" href="/categories/Java/"><span class="card-category-list-name">Java</span><span class="card-category-list-count">1</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/Linux%E8%BF%90%E7%BB%B4/"><span class="card-category-list-name">Linux运维</span><span class="card-category-list-count">5</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/win%E7%B3%BB%E5%88%97/"><span class="card-category-list-name">win系列</span><span class="card-category-list-count">1</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/"><span class="card-category-list-name">数据库</span><span class="card-category-list-count">3</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/"><span class="card-category-list-name">数据结构与算法</span><span class="card-category-list-count">3</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E6%9E%B6%E6%9E%84/"><span class="card-category-list-name">架构</span><span class="card-category-list-count">1</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/"><span class="card-category-list-name">网络安全</span><span class="card-category-list-count">1</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/"><span class="card-category-list-name">计算机网络</span><span class="card-category-list-count">1</span></a></li>
+            
+            </ul></div></div><div class="card-widget card-tags"><div class="card-content"><div class="item-headline"><i class="fas fa-tags"></i><span>标签</span></div><div class="card-tag-cloud"><a href="/tags/CIDR/" style="font-size: 1.1em; color: #999">CIDR</a> <a href="/tags/IPv4/" style="font-size: 1.1em; color: #999">IPv4</a> <a href="/tags/Java/" style="font-size: 1.1em; color: #999">Java</a> <a href="/tags/Linux/" style="font-size: 1.1em; color: #999">Linux</a> <a href="/tags/Redis/" style="font-size: 1.1em; color: #999">Redis</a> <a href="/tags/SSH/" style="font-size: 1.1em; color: #999">SSH</a> <a href="/tags/golang/" style="font-size: 1.1em; color: #999">golang</a> <a href="/tags/iptables/" style="font-size: 1.1em; color: #999">iptables</a> <a href="/tags/kafka/" style="font-size: 1.1em; color: #999">kafka</a> <a href="/tags/kubernetes/" style="font-size: 1.1em; color: #999">kubernetes</a> <a href="/tags/sarama/" style="font-size: 1.1em; color: #999">sarama</a> <a href="/tags/shadowsocks/" style="font-size: 1.1em; color: #999">shadowsocks</a> <a href="/tags/ssh/" style="font-size: 1.1em; color: #999">ssh</a> <a href="/tags/windows/" style="font-size: 1.1em; color: #999">windows</a> <a href="/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/" style="font-size: 1.1em; color: #999">二叉树</a> <a href="/tags/%E5%86%85%E6%A0%B8/" style="font-size: 1.1em; color: #999">内核</a> <a href="/tags/%E5%8F%AF%E4%BC%B8%E7%BC%A9%E6%80%A7/" style="font-size: 1.1em; color: #999">可伸缩性</a> <a href="/tags/%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7/" style="font-size: 1.1em; color: #999">可扩展性</a> <a href="/tags/%E5%A8%B1%E4%B9%90/" style="font-size: 1.1em; color: #999">娱乐</a> <a href="/tags/%E5%AD%90%E7%BD%91/" style="font-size: 1.1em; color: #999">子网</a> <a href="/tags/%E5%AE%B9%E5%99%A8/" style="font-size: 1.1em; color: #999">容器</a> <a href="/tags/%E5%B7%A5%E5%85%B7/" style="font-size: 1.1em; color: #999">工具</a> <a href="/tags/%E6%8E%92%E5%BA%8F/" style="font-size: 1.1em; color: #999">排序</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 1.5em; color: #99a9bf">数据库</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" style="font-size: 1.5em; color: #99a9bf">数据结构</a> <a href="/tags/%E6%A0%91/" style="font-size: 1.1em; color: #999">树</a> <a href="/tags/%E7%BA%A2%E9%BB%91%E6%A0%91/" style="font-size: 1.1em; color: #999">红黑树</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" style="font-size: 1.1em; color: #999">网络安全</a> <a href="/tags/%E8%99%9A%E6%8B%9F%E5%8C%96/" style="font-size: 1.1em; color: #999">虚拟化</a> <a href="/tags/%E9%94%AE%E7%9B%98/" style="font-size: 1.1em; color: #999">键盘</a></div></div></div><div class="card-widget card-archives"><div class="card-content"><div class="item-headline"><i class="fas fa-archive"></i><span>归档</span></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2020/08/"><span class="card-archive-list-date">八月 2020</span><span class="card-archive-list-count">1</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2020/07/"><span class="card-archive-list-date">七月 2020</span><span class="card-archive-list-count">1</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2020/04/"><span class="card-archive-list-date">四月 2020</span><span class="card-archive-list-count">2</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2020/03/"><span class="card-archive-list-date">三月 2020</span><span class="card-archive-list-count">12</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2019/12/"><span class="card-archive-list-date">十二月 2019</span><span class="card-archive-list-count">2</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2019/09/"><span class="card-archive-list-date">九月 2019</span><span class="card-archive-list-count">1</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2019/07/"><span class="card-archive-list-date">七月 2019</span><span class="card-archive-list-count">1</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2019/06/"><span class="card-archive-list-date">六月 2019</span><span class="card-archive-list-count">1</span></a></li></ul></div></div><div class="card-widget card-webinfo"><div class="card-content"><div class="item-headline"><i class="fas fa-chart-line"></i><span>网站资讯</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">文章数目 :</div><div class="item-count">21</div></div><div class="webinfo-item"><div class="item-name">本站访客数 :</div><div class="item-count" id="busuanzi_value_site_uv"></div></div><div class="webinfo-item"><div class="item-name">本站总访问量 :</div><div class="item-count" id="busuanzi_value_site_pv"></div></div><div class="webinfo-item"><div class="item-name">最后更新时间 :</div><div class="item-count" id="last-push-date" data-lastPushDate="2020-12-18T05:37:31.773Z"></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 By Exqlnet</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></div></body></html>
